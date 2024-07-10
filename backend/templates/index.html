@@ -3,31 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Home</title>
+    <title>Home</title>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
     <header>
         <!-- Navbar or header content -->
         <nav>
+            <div class="nav-left">
             <h1> Music Buddy</h1>
+            </div>
+            <div class="nav-right">
             <ul>
                 <li><a>Home</a></li>
                 <li><a href="discover.html">Discover</a></li>
                 <li><a href="#">Collab</a></li>
-                <li><a href="profile.html">Profile</a></li>
+                <li><a href="profile.html" class="nav-right">Profile</a></li>
             </ul>
+            </div>
         </nav>
     </header>
+
+    <section class="welcome-section">
+        <div class="container">
+            <h1>Welcome, User!</h1>
+            <p>This is your personalized user home page.</p>
+        </div>
+    </section>
     
     <main>
         <!-- Main content area -->
-        <section class="welcome-section">
-            <div class="container">
-                <h1>Welcome, User!</h1>
-                <p>This is your personalized user home page.</p>
-            </div>
-        </section>
 
         <section class="leaderboard-section">
             <div class="container">
@@ -51,6 +56,8 @@
     <footer>
         <!-- Footer content -->
         <p>&copy; 2024 Your Company</p>
+        <ul>
+        </ul>
     </footer>
 
     <script src="/static/js/index.js"></script>
