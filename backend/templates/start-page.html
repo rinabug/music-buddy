@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Page</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="start-page-container">
+        <img src="/static/images/logo.png" alt="Logo" class="site-logo">
+        <h1>Music Buddy</h1>
+        <div class="button-container">
+            <a href="login.html" class="button">Login</a>
+            <a href="{{ url_for('signup') }}" class="button">Signup</a> 
+            <button id="spotify-login">Login with Spotify</button>
+        </div>
+    </div>
+    <script src="/static/js/start-page.js"></script>
+</body>
+</html>
