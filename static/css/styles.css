@@ -232,6 +232,10 @@ main {
     text-align: center;
 }
 
+.welcome-section h1 {
+    font-size: 3em;
+}
+
 main {
     display: flex;
     flex-wrap: wrap;
@@ -266,6 +270,10 @@ main {
     margin-top: 50px;
 }
 
+.Discover-section h1 {
+    font-size: 3em;
+}
+
 .Concert-section, .Music-section {
     display: flex; 
     flex-direction: column; 
@@ -286,6 +294,72 @@ main {
     margin-bottom: 15px;
 }
 
+/*collab styling*/
+.collab-section{
+    display: flex;
+    text-align: center;
+    align-items: center;
+    margin-bottom: 50px;
+    margin-top: 50px;
+}
+
+.collab-section h1 {
+    font-size: 3em;
+}
+
+.playlist-section, .chat-section {
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    text-align: center;
+    padding: 30px;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    margin-right: 30px;
+    margin-left: 30px;
+    background-color: #CB98ED;
+    width: calc(50% - 60px);
+    height: 600px;
+}
+
+.playlist-section h2, .chat-section h2 {
+    margin-bottom: 15px;
+}
+
+/*profile styling*/
+.profile-section{
+    display: flex;
+    text-align: center;
+    align-items: center;
+    margin-bottom: 50px;
+    margin-top: 50px;
+}
+
+.friends-section, .badges-section {
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    text-align: center;
+    padding: 30px;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    margin-right: 30px;
+    margin-left: 30px;
+    background-color: #CB98ED;
+    width: calc(50% - 60px);
+    height: 600px;
+}
+
+.friends-section h2, .badges-section h2 {
+    margin-bottom: 15px;
+}
+
+.profile-section h1 {
+    font-size: 3em;
+}
+
 footer {
     text-align: center;
     padding: 40px;
@@ -296,4 +370,8 @@ footer {
     left: 0;
     right: 0;
     height: 50px;
+}
+
+body {
+    font-family: 'Monospace', Lucida Console;
 }
