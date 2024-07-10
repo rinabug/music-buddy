@@ -1,26 +1,27 @@
-document.getElementById('register-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const username = document.getElementById('username').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+document.addEventListener('DOMContentLoaded', () => {
+    const registerForm = document.getElementById('register-form');
 
-    try {
-        const response = await fetch('/api/register', {
+    registerForm.addEventListener('submit', event => {
+        event.preventDefault();
+        
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        fetch('/api/signup', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, email, password })
-        });
-        const data = await response.json();
-        if (response.ok) {
-            alert('Registration successful');
-            window.location.href = '/login';
-        } else {
-            alert(data.message);
-        }
-    } catch (error) {
-        console.error('Registration failed:', error);
-        alert('Registration failed');
-    }
+            body: JSON.stringify({ name, email, password })
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = 'login.html';  // Redirect to login page on successful signup
+            } else {
+                alert('Signup failed. Please check your details and try again.');
+            }
+        })
+        .catch(error => console.error('Error signing up:', error));
+    });
 });
