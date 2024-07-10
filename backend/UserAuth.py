@@ -2,6 +2,7 @@ import re
 import hashlib
 import sqlite3
 
+from friend_system import friend_management_menu
 
 def create_users_table(conn):
     cursor = conn.cursor()
@@ -96,6 +97,7 @@ def main():
             username = login(conn)
             if username:
                 spotify_login()
+                friend_management_menu(conn, username)
             continue
         elif choice == 'users':
             view_users(conn)
