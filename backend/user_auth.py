@@ -2,7 +2,7 @@ import re
 import hashlib
 import sqlite3
 
-from friend_system import friend_management_menu
+from backend.friend_system import friend_management_menu
 
 def create_users_table(conn):
     cursor = conn.cursor()
