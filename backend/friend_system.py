@@ -61,7 +61,7 @@ def accept_friend_request(conn, username, request_id):
     ''', (request_id, username))
     
     if cursor.rowcount == 0:
-        print("Invalid request ID or you don't have permission to accept this request.")
+        print("Invalid request ID")
         return
 
     cursor.execute('''
