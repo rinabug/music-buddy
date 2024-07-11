@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, redirect, session, url_for, f
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
-from backend.UserAuth import create_users_table, is_valid_email, is_valid_password, hash_password
+from backend.user_auth import create_users_table, is_valid_email, is_valid_password, hash_password
 from backend.friend_system import create_friend_tables, send_friend_request, view_friend_requests, accept_friend_request, view_friends
 
 app = Flask(__name__)
