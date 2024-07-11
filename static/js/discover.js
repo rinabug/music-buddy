@@ -1,15 +1,22 @@
-document.addEventListener('DOMContentLoaded', () => {
-    loadConcerts();
-    loadMusic();
-    loadTopArtists();
-});
+// discover.js
+document.addEventListener('DOMContentLoaded', function() {
+    const concertForm = document.getElementById('concertForm');
 
-function loadTopArtists() {
-    fetch('/api/spotify/top-artists')
-        .then(response => response.json())
-        .then(data => {
-            const topArtistsContent = document.getElementById('topArtistsContent');
-            topArtistsContent.innerHTML = data.items.map(item => `<p>${item.name}</p>`).join('');
-        })
-        .catch(error => console.error('Error loading top artists:', error));
-}
+    concertForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const formData = new FormData(concertForm);
+        const url = concertForm.getAttribute('action');
+
+        fetch(`${url}?${new URLSearchParams(formData)}`)
+            .then(response => response.text())
+            .then(data => {
+                // Open a new window or tab with concert recommendations
+                const newWindow = window.open('', '_blank');
+                newWindow.document.write(data);
+                newWindow.document.close();
+            })
+            .catch(error => {
+                console.error('Error fetching concert recommendations:', error);
+            });
+    });
+});
