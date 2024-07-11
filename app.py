@@ -6,6 +6,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
 from backend.user_auth import create_users_table, is_valid_email, is_valid_password, hash_password
 from backend.friend_system import create_friend_tables, send_friend_request, view_friend_requests, accept_friend_request, view_friends
+from backend.concert_recommendations import get_chatgpt_recommendations, get_events, format_events
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
@@ -15,6 +16,7 @@ client_id = '6d71bbd76afd4e52a9399c06a7d36124'
 client_secret = '59fdb7c8afab4c03afc3021435f49d83'
 redirect_uri = 'http://localhost:8080/callback'
 scope = 'playlist-read-private,user-follow-read,user-top-read,user-read-recently-played'
+
 cache_handler = FlaskSessionCacheHandler(session)
 
 sp_oauth = SpotifyOAuth(
@@ -56,25 +58,44 @@ def callback():
 @app.route('/index')
 def index():
     token_info = session.get('token_info', None)
-    if not token_info:
-        return redirect(url_for('login'))
+    if not token_info or not sp_oauth.validate_token(token_info):
+        return redirect(url_for('loginSpotify'))
     
     sp = Spotify(auth=token_info['access_token'])
     playlists = sp.current_user_playlists()
     playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
     return render_template('index.html', playlists_info=playlists_info)
 
-@app.route('/get_playlists')
-def get_playlists():
-    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
-        auth_url = sp_oauth.get_authorize_url()
-        return redirect(auth_url)
+@app.route('/discover', methods=['GET', 'POST'])
+def discover():
+    if request.method == 'POST':
+        genre = request.form['genre']
+        location = request.form['location']
+        radius = request.form['radius']
+        
+        # Fetch events and generate recommendations based on user inputs
+        raw_events = get_events(location, genre, radius)
+        formatted_events = format_events(raw_events)
+        recommendations = get_chatgpt_recommendations(formatted_events, genre)
+        
+        return render_template('discover.html', concerts=recommendations)
     
-    sp = Spotify(auth_manager=sp_oauth)
-    playlists = sp.current_user_playlists()
-    playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
-    playlists_html = '<br>'.join([f'<a href="{url}">{name}</a>' for name, url in playlists_info])
-    return f'<h1>Your Playlists</h1>{playlists_html}<br><a href="/logout">Logout</a>'
+    # Handle initial GET request (if needed)
+    return render_template('discover.html', concerts=None)
+
+@app.route('/get_concerts', methods=['POST'])
+def get_concerts():
+    genre = request.form['genre']
+    location = request.form['location']
+    radius = request.form['radius']
+    
+    # Fetch events and generate recommendations based on user inputs
+    raw_events = get_events(location, genre, radius)
+    formatted_events = format_events(raw_events)
+    recommendations = get_chatgpt_recommendations(formatted_events, genre)
+    
+    return render_template('concert_recommendations.html', concerts=recommendations)
+
 
 @app.route('/logout')
 def logout():
@@ -115,13 +136,43 @@ def friend_requests():
 def profile():
     return render_template('profile.html')
 
-@app.route('/discover')
-def discover():
-    return render_template('discover.html')
+
+@app.route('/get_concert_recommendations', methods=['GET'])
+def get_concert_recommendations():
+    genre = request.args.get('genre')
+    location = request.args.get('location')
+    radius = request.args.get('radius')
+
+    events = get_events(location, genre, radius)
+
+    if events:
+        formatted_events = format_events(events)
+        recommendations = get_chatgpt_recommendations(formatted_events, genre)
+        return recommendations
+    else:
+        return f"Sorry, no events found within {radius} miles of {location} for the genre {genre} in the next 30 days."
+
 
 @app.route('/collab')
 def collab():
-    return render_template('collab.html')
+    token_info = session.get('token_info', None)
+    if not token_info:
+        return redirect(url_for('login'))
+    
+    sp = Spotify(auth=token_info['access_token'])
+    playlists = sp.current_user_playlists()
+    
+    playlists_info = []
+    for pl in playlists['items']:
+        name = pl['name']
+        if pl['images']:
+            image_url = pl['images'][0]['url']
+        else:
+            # Provide a default image URL or handle the case where no image is available
+            image_url = 'default_image_url.jpg'
+        playlists_info.append({'name': name, 'image_url': image_url, 'spotify_url': pl['external_urls']['spotify']})
+    
+    return render_template('collab.html', playlists_info=playlists_info)
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
