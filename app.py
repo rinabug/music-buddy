@@ -6,7 +6,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
 from backend.user_auth import create_users_table, is_valid_email, is_valid_password, hash_password
 from backend.friend_system import create_friend_tables, send_friend_request, view_friend_requests, accept_friend_request, view_friends
-from backend.concert_recommendations import get_events, format_events, get_chatgpt_recommendations
+from backend.concert_recommendations import get_chatgpt_recommendations, get_events, format_events
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
@@ -16,6 +16,7 @@ client_id = '6d71bbd76afd4e52a9399c06a7d36124'
 client_secret = '59fdb7c8afab4c03afc3021435f49d83'
 redirect_uri = 'http://localhost:8080/callback'
 scope = 'playlist-read-private,user-follow-read,user-top-read,user-read-recently-played'
+
 cache_handler = FlaskSessionCacheHandler(session)
 
 sp_oauth = SpotifyOAuth(
@@ -57,25 +58,62 @@ def callback():
 @app.route('/index')
 def index():
     token_info = session.get('token_info', None)
-    if not token_info:
-        return redirect(url_for('login'))
+    if not token_info or not sp_oauth.validate_token(token_info):
+        return redirect(url_for('loginSpotify'))
     
     sp = Spotify(auth=token_info['access_token'])
     playlists = sp.current_user_playlists()
     playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
     return render_template('index.html', playlists_info=playlists_info)
 
-@app.route('/get_playlists')
-def get_playlists():
-    if not sp_oauth.validate_token(cache_handler.get_cached_token()):
-        auth_url = sp_oauth.get_authorize_url()
-        return redirect(auth_url)
+@app.route('/discover', methods=['GET', 'POST'])
+def discover():
+    if request.method == 'POST':
+        genre = request.form['genre']
+        location = request.form['location']
+        radius = request.form['radius']
+        
+        # Fetch events and generate recommendations based on user inputs
+        raw_events = get_events(location, genre, radius)
+        formatted_events = format_events(raw_events)
+        recommendations = get_chatgpt_recommendations(formatted_events, genre)
+        
+        return render_template('discover.html', concerts=recommendations)
     
-    sp = Spotify(auth_manager=sp_oauth)
+    # Handle initial GET request (if needed)
+    return render_template('discover.html', concerts=None)
+
+@app.route('/get_concerts', methods=['POST'])
+def get_concerts():
+    genre = request.form['genre']
+    location = request.form['location']
+    radius = request.form['radius']
+    
+    # Fetch events and generate recommendations based on user inputs
+    raw_events = get_events(location, genre, radius)
+    formatted_events = format_events(raw_events)
+    recommendations = get_chatgpt_recommendations(formatted_events, genre)
+    
+    return render_template('concert_recommendations.html', concerts=recommendations)
+
+
+
+
+@app.route('/collab')
+def collab():
+    token_info = session.get('token_info', None)
+    if not token_info or not sp_oauth.validate_token(token_info):
+        return redirect(url_for('loginSpotify'))
+    
+    sp = Spotify(auth=token_info['access_token'])
     playlists = sp.current_user_playlists()
-    playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
-    playlists_html = '<br>'.join([f'<a href="{url}">{name}</a>' for name, url in playlists_info])
-    return f'<h1>Your Playlists</h1>{playlists_html}<br><a href="/logout">Logout</a>'
+    playlists_info = [{
+        'name': pl['name'],
+        'spotify_url': pl['external_urls']['spotify'],
+        'image_url': pl['images'][0]['url'] if pl['images'] else '/static/images/placeholder.png'
+    } for pl in playlists['items']]
+    
+    return render_template('collab.html', playlists_info=playlists_info)
 
 @app.route('/logout')
 def logout():
@@ -84,40 +122,10 @@ def logout():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
-    if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-        
-        conn = get_db_connection()
-        error = register(conn, username, email, password)
-        conn.close()
-        
-        if error is None:
-            flash('Registration successful!', 'success')
-            return redirect(url_for('login'))
-        else:
-            flash(error, 'error')
-    
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        identifier = request.form['identifier']
-        password = request.form['password']
-        
-        conn = get_db_connection()
-        username = login(conn, identifier, password)
-        conn.close()
-        
-        if username:
-            session['username'] = username
-            flash('Login successful!', 'success')
-            return redirect(url_for('index'))
-        else:
-            flash('Invalid credentials. Please try again.', 'error')
-    
     return render_template('login.html')
 
 @app.route('/friend_requests', methods=['GET', 'POST'])
@@ -164,8 +172,6 @@ def get_concert_recommendations():
         return recommendations
     else:
         return f"Sorry, no events found within {radius} miles of {location} for the genre {genre} in the next 30 days."
-    
-
 
 
 @app.route('/collab')
