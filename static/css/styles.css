@@ -403,6 +403,33 @@ footer {
     background-color: #0056b3;
 }
 
+.recommendation-box {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    width: 100%; /* Ensures it stretches to fit its container */
+    max-width: 600px; /* Adjust the maximum width as needed */
+    margin: 20px auto; /* Centers the box horizontally with some margin */
+}
+
+.recommendation-box h3 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: #333; /* Adjust text color */
+}
+
+.recommendation-box ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.recommendation-box li {
+    margin-bottom: 5px;
+}
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {

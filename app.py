@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, redirect, session, url_for, f
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
-from backend.user_auth import create_users_table, register, login, view_users
+from backend.user_auth import create_users_table, is_valid_email, is_valid_password, hash_password
 from backend.friend_system import create_friend_tables, send_friend_request, view_friend_requests, accept_friend_request, view_friends
 from backend.concert_recommendations import get_events, format_events, get_chatgpt_recommendations
 
@@ -164,6 +164,8 @@ def get_concert_recommendations():
         return recommendations
     else:
         return f"Sorry, no events found within {radius} miles of {location} for the genre {genre} in the next 30 days."
+    
+
 
 
 @app.route('/collab')
