@@ -1,24 +1,25 @@
-document.addEventListener('DOMContentLoaded', () => {
-    loadFriends();
-    loadBadges();
-});
-
-function loadFriends() {
+document.addEventListener('DOMContentLoaded', function() {
     fetch('/api/friends')
         .then(response => response.json())
         .then(data => {
             const friendsContent = document.getElementById('friendsContent');
-            friendsContent.innerHTML = data.map(item => `<p>${item.name}</p>`).join('');
+            if (data.error) {
+                friendsContent.innerHTML = `<p>${data.error}</p>`;
+            } else if (data.length === 0) {
+                friendsContent.innerHTML = '<p>You don\'t have any friends yet.</p>';
+            } else {
+                const friendList = document.createElement('ul');
+                data.forEach(friend => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = friend;
+                    friendList.appendChild(listItem);
+                });
+                friendsContent.appendChild(friendList);
+            }
         })
-        .catch(error => console.error('Error loading friends:', error));
-}
+        .catch(error => {
+            console.error('Error fetching friends:', error);
+            document.getElementById('friendsContent').innerHTML = '<p>Error loading friends. Please try again later.</p>';
+        });
+});
 
-function loadBadges() {
-    fetch('/api/badges')
-        .then(response => response.json())
-        .then(data => {
-            const badgesContent = document.getElementById('badgesContent');
-            badgesContent.innerHTML = data.map(item => `<p>${item.name}</p>`).join('');
-        })
-        .catch(error => console.error('Error loading badges:', error));
-}

@@ -4,8 +4,9 @@ from flask import Flask, render_template, request, redirect, session, url_for, f
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
-from backend.user_auth import create_users_table, is_valid_email, is_valid_password, hash_password
+from backend.user_auth import create_users_table, register, login, view_users
 from backend.friend_system import create_friend_tables, send_friend_request, view_friend_requests, accept_friend_request, view_friends
+from backend.concert_recommendations import get_events, format_events, get_chatgpt_recommendations
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
@@ -83,10 +84,40 @@ def logout():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+        
+        conn = get_db_connection()
+        error = register(conn, username, email, password)
+        conn.close()
+        
+        if error is None:
+            flash('Registration successful!', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash(error, 'error')
+    
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        identifier = request.form['identifier']
+        password = request.form['password']
+        
+        conn = get_db_connection()
+        username = login(conn, identifier, password)
+        conn.close()
+        
+        if username:
+            session['username'] = username
+            flash('Login successful!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid credentials. Please try again.', 'error')
+    
     return render_template('login.html')
 
 @app.route('/friend_requests', methods=['GET', 'POST'])
@@ -119,9 +150,42 @@ def profile():
 def discover():
     return render_template('discover.html')
 
+@app.route('/get_concert_recommendations', methods=['GET'])
+def get_concert_recommendations():
+    genre = request.args.get('genre')
+    location = request.args.get('location')
+    radius = request.args.get('radius')
+
+    events = get_events(location, genre, radius)
+
+    if events:
+        formatted_events = format_events(events)
+        recommendations = get_chatgpt_recommendations(formatted_events, genre)
+        return recommendations
+    else:
+        return f"Sorry, no events found within {radius} miles of {location} for the genre {genre} in the next 30 days."
+
+
 @app.route('/collab')
 def collab():
-    return render_template('collab.html')
+    token_info = session.get('token_info', None)
+    if not token_info:
+        return redirect(url_for('login'))
+    
+    sp = Spotify(auth=token_info['access_token'])
+    playlists = sp.current_user_playlists()
+    
+    playlists_info = []
+    for pl in playlists['items']:
+        name = pl['name']
+        if pl['images']:
+            image_url = pl['images'][0]['url']
+        else:
+            # Provide a default image URL or handle the case where no image is available
+            image_url = 'default_image_url.jpg'
+        playlists_info.append({'name': name, 'image_url': image_url, 'spotify_url': pl['external_urls']['spotify']})
+    
+    return render_template('collab.html', playlists_info=playlists_info)
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)

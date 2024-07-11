@@ -2,8 +2,6 @@ import re
 import hashlib
 import sqlite3
 
-from friend_system import friend_management_menu
-
 def create_users_table(conn):
     cursor = conn.cursor()
     cursor.execute('''
@@ -49,7 +47,6 @@ def register(conn):
             print("Invalid Password. It must be at least 8 characters long and contain at least one special character.")
             continue
         hashed_password = hash_password(password)
-        #CHANGE TO SQL COMMAND AFTER
         cursor.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", (username, email, hashed_password))
         conn.commit()
         print("Registered.")
@@ -96,8 +93,10 @@ def main():
         elif choice == '2':
             username = login(conn)
             if username:
-                spotify_login()
+                spotify_login() #too messy; implement seperate user menu
                 friend_management_menu(conn, username)
+                leaderboard_trivia_menu(conn, username)
+                concert_recommendation_menu() #implement option where they can save recommendations
             continue
         elif choice == 'users':
             view_users(conn)
@@ -110,4 +109,3 @@ def main():
     
 if __name__ == "__main__":
     main()
-

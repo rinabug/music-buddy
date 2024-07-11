@@ -4,23 +4,27 @@ document.addEventListener('DOMContentLoaded', () => {
     loginForm.addEventListener('submit', event => {
         event.preventDefault();
         
-        const email = document.getElementById('email').value;
+        const identifier = document.getElementById('identifier').value;
         const password = document.getElementById('password').value;
 
-        fetch('/api/login', {
+        fetch('/login', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: JSON.stringify({ email, password })
+            body: new URLSearchParams({
+                identifier: identifier,
+                password: password
+            })
         })
         .then(response => {
-            if (response.ok) {
-                window.location.href = 'index.html';  // Redirect to home page on successful login
+            if (response.redirected) {
+                window.location.href = response.url;  // Redirect to home page on successful login
             } else {
-                alert('Login failed. Please check your email and password.');
+                alert('Login failed. Please check your username/email and password.');
             }
         })
         .catch(error => console.error('Error logging in:', error));
     });
 });
+
