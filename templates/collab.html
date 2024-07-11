@@ -13,7 +13,7 @@
         <nav>
             <h1> Music Buddy</h1>
             <ul>
-                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
                 <li><a href="{{ url_for('discover') }}">Discover</a></li>
                 <li><a>Collab</a></li>
                 <li><a href="{{ url_for('profile') }}">Profile</a></li>
@@ -52,7 +52,7 @@
 
     <footer>
         <!-- Footer content -->
-        <a href="{{ url_for('start_page') }}" class="logout">Logout</a>
+        <a href="{{ url_for('logout') }}" class="logout">Logout</a>
     </footer>
 
     <script src="{{ url_for('static', filename='js/collab.js') }}"></script>
