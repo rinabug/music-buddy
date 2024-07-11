@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const spotifyLoginButton = document.getElementById('spotify-login');
+    const spotifyLoginButton = document.getElementById('loginSpotify');
 
     spotifyLoginButton.addEventListener('click', () => {
         // Redirect to Spotify login page or handle Spotify OAuth flow
-        window.location.href = '/api/spotify-login';  // Adjust the URL to match backend endpoint
+        window.location.href = '/loginSpotify';  // Redirect to your Flask login route
     });
 });
