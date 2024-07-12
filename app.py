@@ -396,7 +396,72 @@ def discover():
 
 @app.route('/collab')
 def collab():
-    return render_template('collab.html')
+    if 'username' not in session:
+        flash("Please log in to access this page.")
+        return redirect(url_for('login'))
+
+    token_info = session.get('token_info', None)
+    if not token_info:
+        flash("Please connect your Spotify account.")
+        return redirect(url_for('loginSpotify'))
+
+    try:
+        sp = Spotify(auth=token_info['access_token'])
+        playlists = get_user_top_playlists(limit=5)  # Fetch top playlists
+        playlists_info = [(pl['name'], pl['images'][0]['url'], pl['external_urls']['spotify']) for pl in playlists]
+
+    except Exception as e:
+        print(f"Error fetching Spotify playlists: {e}")
+        flash("There was an error connecting to Spotify. Please try logging in again.")
+        return redirect(url_for('loginSpotify'))
+
+    return render_template('collab.html', playlists_info=playlists_info)
+
+
+@app.route('/get_friend_messages')
+def get_friend_messages():
+    if 'username' not in session:
+        return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
+
+    conn = get_db_connection()
+    messages = get_friend_messages(conn, session['username'])  # Implement this function to fetch messages
+    conn.close()
+
+    return jsonify(messages)
+
+@app.route('/send_friend_message', methods=['POST'])
+def send_friend_message():
+    if 'username' not in session:
+        return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
+    
+    data = request.form
+    recipient_username = data.get('recipient_username')
+    message = data.get('message')
+
+    conn = get_db_connection()
+    result = send_friend_message(conn, session['username'], recipient_username, message)  # Implement this function to send message
+    conn.close()
+
+    if result:
+        return jsonify({'success': True, 'message': 'Message sent successfully.'})
+    else:
+        return jsonify({'success': False, 'message': 'Failed to send message.'}), 500
+
+# Function to get Spotify token from session
+def get_spotify_token():
+    token_info = session.get('token_info', None)
+    if not token_info:
+        return None
+    return token_info['access_token']
+
+def get_user_top_playlists(limit=5):
+    token = get_spotify_token()
+    if not token:
+        return None
+    
+    sp = Spotify(auth=token)
+    playlists = sp.current_user_playlists(limit=limit)
+    return playlists['items']
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
