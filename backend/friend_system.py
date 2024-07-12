@@ -26,7 +26,7 @@ def send_friend_request(conn, sender_username, receiver_username):
     cursor.execute("SELECT username FROM users WHERE username = ?", (receiver_username,))
     if not cursor.fetchone():
         print("User not found.")
-        return
+        return False
 
     cursor.execute("""
     INSERT INTO friend_requests (sender_username, receiver_username, status) 
@@ -87,12 +87,7 @@ def view_friends(conn, username):
     ''', (username, username, username))
     friends = cursor.fetchall()
     
-    if not friends:
-        print("You don't have any friends yet.")
-    else:
-        print("Your friends:")
-        for friend in friends:
-            print(friend[0])
+    return [friend[0] for friend in friends]
 
 def friend_management_menu(conn, username):
     create_friend_tables(conn)
