@@ -66,6 +66,16 @@ def index():
     playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
     return render_template('index.html', playlists_info=playlists_info)
 
+@app.route('/chat_recommendations', methods=['GET', 'POST'])
+def chat_recommendations():
+    if request.method == 'POST':
+        data = request.get_json()
+        session['chat_recommendations'] = data['data']
+        return '', 204
+    
+    recommendations = session.get('chat_recommendations', None)
+    return render_template('chat_recommendations.html', recommendations=recommendations)
+
 @app.route('/discover', methods=['GET', 'POST'])
 def discover():
     if request.method == 'POST':
@@ -78,10 +88,14 @@ def discover():
         formatted_events = format_events(raw_events)
         recommendations = get_chatgpt_recommendations(formatted_events, genre)
         
-        return render_template('discover.html', concerts=recommendations)
+        # Store recommendations in session for later use
+        session['chat_recommendations'] = recommendations
+        
+        return redirect(url_for('chat_recommendations'))
     
     # Handle initial GET request (if needed)
     return render_template('discover.html', concerts=None)
+
 
 @app.route('/get_concerts', methods=['POST'])
 def get_concerts():

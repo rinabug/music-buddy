@@ -1,4 +1,3 @@
-// discover.js
 document.addEventListener('DOMContentLoaded', function() {
     const concertForm = document.getElementById('concertForm');
 
@@ -10,10 +9,16 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`${url}?${new URLSearchParams(formData)}`)
             .then(response => response.text())
             .then(data => {
-                // Open a new window or tab with concert recommendations
-                const newWindow = window.open('', '_blank');
-                newWindow.document.write(data);
-                newWindow.document.close();
+                // Instead of opening a new window, set the HTML content to the session and redirect to the new page
+                fetch('/chat_recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data: data })
+                }).then(() => {
+                    window.location.href = '/chat_recommendations';
+                });
             })
             .catch(error => {
                 console.error('Error fetching concert recommendations:', error);
