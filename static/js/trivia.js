@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     nextQuestionButton.addEventListener('click', loadQuestion);
 
-    // Only load a new question if there isn't one already displayed
     if (!questionElement.textContent.trim()) {
         loadQuestion();
     }
