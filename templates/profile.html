@@ -33,15 +33,11 @@
         <section id="friends-section" class="friends-section">
             <div class="container">
                 <h2>Your Friends</h2>
-                {% if friends %}
-                    <ul id="friends-list">
-                        {% for friend in friends %}
-                            <li>{{ friend }}</li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>You don't have any friends yet.</p>
-                {% endif %}
+                <ul id="friends-list">
+                    {% for friend in friends %}
+                        <li>{{ friend }}</li>
+                    {% endfor %}
+                </ul>
                 <div id="friendsContent">
                     <!-- friend content will be loaded dynamically -->
                 </div>
@@ -67,7 +63,15 @@
             <div class="container">
                 <h2>Badges</h2>
                 <div id="badgesContent">
-                    <!-- Badge content will be loaded dynamically -->
+                    {% if badges %}
+                        <ul>
+                        {% for badge in badges %}
+                            <li>{{ badge[0] }} - Earned on {{ badge[1] }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No badges earned yet. Keep playing to earn badges!</p>
+                    {% endif %}
                 </div>
             </div>
         </section>
