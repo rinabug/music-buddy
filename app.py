@@ -15,8 +15,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
 DATABASE = 'users.db'
 
-client_id = '6d71bbd76afd4e52a9399c06a7d36124'
-client_secret = '59fdb7c8afab4c03afc3021435f49d83'
+client_id = '908db28b7d8e4d03888632068918bff1'
+client_secret = '92919a8126964ba5b4da358d97c729ef'
 redirect_uri = 'http://localhost:8080/callback'
 scope = 'playlist-read-private,user-follow-read,user-top-read,user-read-recently-played'
 
@@ -34,6 +34,18 @@ sp_oauth = SpotifyOAuth(
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     return conn
+#ADDED MESSAGES TABLE!!!!!!!!!!
+def create_messages_table(conn):
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        message TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+    conn.commit()
 
 @app.before_request
 def initialize_database():
@@ -42,7 +54,40 @@ def initialize_database():
     create_friend_tables(conn)
     create_leaderboard_table(conn)
     create_badges_table(conn)
+    create_messages_table(conn)  #ADD THIS LINE
     conn.close()
+#ADDED BELOW
+@app.route('/get_global_messages')
+def get_global_messages():
+    if 'username' not in session:
+        return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT username, message, timestamp FROM messages ORDER BY timestamp DESC LIMIT 50")
+    messages = [{'username': row[0], 'message': row[1], 'timestamp': row[2]} for row in cursor.fetchall()]
+    conn.close()
+    
+    return jsonify({'status': 'success', 'messages': messages})
+#ADDED BELOW
+@app.route('/send_global_message', methods=['POST'])
+def send_global_message():
+    if 'username' not in session:
+        return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
+    
+    data = request.form
+    message = data.get('message')
+    
+    if not message:
+        return jsonify({'status': 'error', 'message': 'Message cannot be empty.'}), 400
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO messages (username, message) VALUES (?, ?)", (session['username'], message))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'status': 'success', 'message': 'Message sent successfully.'})
 
 @app.route('/')
 def start_page():
