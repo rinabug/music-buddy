@@ -132,8 +132,11 @@ def get_trivia_question():
     try:
         top_artists = sp.current_user_top_artists(limit=5, time_range='short_term')['items']
         artist_names = [artist['name'] for artist in top_artists]
-        question_data = generate_trivia_question(artist_names)
-        session['current_question'] = question_data
+        asked_questions = session.get('asked_questions', [])
+        question_data = generate_trivia_question(artist_names, asked_questions)
+        if question_data:
+            session['asked_questions'] = asked_questions + [question_data['question']]
+            session['current_question'] = question_data
         return jsonify(question_data)
     except Exception as e:
         print(f"Error generating trivia question: {e}")
@@ -159,6 +162,47 @@ def answer_trivia():
         result = {'status': 'incorrect', 'message': f"Wrong answer. The correct answer was {current_question['correct_answer']}.", 'correct_answer': current_question['correct_answer']}
 
     return jsonify(result)
+
+@app.route('/get_global_leaderboard')
+def get_global_leaderboard():
+    conn = get_db_connection()
+    leaderboard = get_leaderboard(conn)
+    
+    # Add current user if not in the top 10
+    if 'username' in session:
+        current_user = session['username']
+        if not any(user['username'] == current_user for user in leaderboard):
+            cursor = conn.cursor()
+            cursor.execute('SELECT username, score FROM leaderboard WHERE username = ?', (current_user,))
+            user_score = cursor.fetchone()
+            if user_score:
+                leaderboard.append({"username": user_score[0], "score": user_score[1]})
+                leaderboard.sort(key=lambda x: x['score'], reverse=True)
+    
+    conn.close()
+    return jsonify(leaderboard[:10])
+
+@app.route('/get_friends_leaderboard')
+def get_friends_leaderboard():
+    if 'username' not in session:
+        return jsonify({'status': 'error', 'message': 'Invalid session'}), 400
+
+    conn = get_db_connection()
+    leaderboard = get_friends_leaderboard(conn, session['username'])
+
+    # Add current user if not in the top 10
+    current_user = session['username']
+    if not any(user['username'] == current_user for user in leaderboard):
+        cursor = conn.cursor()
+        cursor.execute('SELECT username, score FROM leaderboard WHERE username = ?', (current_user,))
+        user_score = cursor.fetchone()
+        if user_score:
+            leaderboard.append({"username": user_score[0], "score": user_score[1]})
+            leaderboard.sort(key=lambda x: x['score'], reverse=True)
+    
+    conn.close()
+    return jsonify(leaderboard[:10])
+
 
 
 @app.route('/get_playlists')

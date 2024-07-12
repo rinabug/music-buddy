@@ -34,25 +34,40 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             resultElement.textContent = data.message;
             if (data.status === 'correct') {
-                loadLeaderboard(); // Update leaderboard if the answer is correct
+                loadGlobalLeaderboard(); // Update global leaderboard if the answer is correct
+                loadFriendsLeaderboard(); // Update friends leaderboard if the answer is correct
             }
             nextQuestionButton.style.display = 'block';
         })
         .catch(error => console.error('Error submitting answer:', error));
     }
 
-    function loadLeaderboard() {
-        fetch('/get_leaderboard')
+    function loadGlobalLeaderboard() {
+        fetch('/get_global_leaderboard')
             .then(response => response.json())
             .then(data => {
-                const leaderboardContent = document.getElementById('leaderboardContent');
-                leaderboardContent.innerHTML = `
+                const globalLeaderboardContent = document.getElementById('globalLeaderboardContent');
+                globalLeaderboardContent.innerHTML = `
                     <ol>
                         ${data.map(item => `<li>${item.username}: ${item.score} points</li>`).join('')}
                     </ol>
                 `;
             })
-            .catch(error => console.error('Error loading leaderboard:', error));
+            .catch(error => console.error('Error loading global leaderboard:', error));
+    }
+
+    function loadFriendsLeaderboard() {
+        fetch('/get_friends_leaderboard')
+            .then(response => response.json())
+            .then(data => {
+                const friendsLeaderboardContent = document.getElementById('friendsLeaderboardContent');
+                friendsLeaderboardContent.innerHTML = `
+                    <ol>
+                        ${data.map(item => `<li>${item.username}: ${item.score} points</li>`).join('')}
+                    </ol>
+                `;
+            })
+            .catch(error => console.error('Error loading friends leaderboard:', error));
     }
 
     optionsElement.addEventListener('click', (event) => {

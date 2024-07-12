@@ -39,38 +39,64 @@ def get_leaderboard(conn):
     ''')
     return [{"username": row[0], "score": row[1]} for row in cursor.fetchall()]
 
-def generate_trivia_question(artists):
+def get_friends_leaderboard(conn, username):
+    cursor = conn.cursor()
+    cursor.execute('''
+    SELECT username, score 
+    FROM leaderboard 
+    WHERE username IN (
+        SELECT friend_username 
+        FROM friends 
+        WHERE username = ?
+    ) 
+    ORDER BY score DESC 
+    LIMIT 10
+    ''', (username,))
+    return [{"username": row[0], "score": row[1]} for row in cursor.fetchall()]
+
+def generate_trivia_question(artists, asked_questions=[]):
     artist = random.choice(artists) if artists else None
     prompt = f"Generate a music trivia question "
     if artist:
         prompt += f"about the artist {artist} "
     prompt += "with four multiple-choice options. Format the response as: Question\\nA) Option\\nB) Option\\nC) Option\\nD) Option\\nCorrect Answer: Letter"
 
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a music trivia expert."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    
-    question_data = response.choices[0].message.content
-    pattern = r"Question\s*(.*)\s*A\)\s*(.*)\s*B\)\s*(.*)\s*C\)\s*(.*)\s*D\)\s*(.*)\s*Correct Answer:\s*([A-D])"
-    match = re.match(pattern, question_data, re.DOTALL)
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a music trivia expert."},
+                {"role": "user", "content": prompt}
+            ]
+        )
 
-    if match:
-        question = match.group(1).strip()
-        options = {
-            'A': match.group(2).strip(),
-            'B': match.group(3).strip(),
-            'C': match.group(4).strip(),
-            'D': match.group(5).strip()
-        }
-        correct_answer = match.group(6).strip()
-        return {'question': question, 'options': options, 'correct_answer': correct_answer}
-    else:
-        print("Error. Unable to parse the question data.")
-        print(question_data)
+        question_data = response.choices[0].message.content
+        pattern = r"Question\s*(.*)\s*A\)\s*(.*)\s*B\)\s*(.*)\s*C\)\s*(.*)\s*D\)\s*(.*)\s*Correct Answer:\s*([A-D])"
+        match = re.match(pattern, question_data, re.DOTALL)
+
+        if match:
+            question = match.group(1).strip().replace('\n', '').replace(':', ''),
+            options = {
+                'A': match.group(2).strip().replace('\n', '').replace(':', ''),
+                'B': match.group(3).strip().replace('\n', '').replace(':', ''),
+                'C': match.group(4).strip().replace('\n', '').replace(':', ''),
+                'D': match.group(5).strip().replace('\n', '').replace(':', ''),
+            }
+            correct_answer = match.group(6).strip()
+
+            # Check if question has been asked before
+            if question in asked_questions:
+                return generate_trivia_question(artists, asked_questions)  # Recursive call to get a new question
+            else:
+                return {'question': question, 'options': {key: value.replace('\\n', '') for key, value in options.items()}, 'correct_answer': correct_answer}
+
+        else:
+            print("Error. Unable to parse the question data.")
+            print(question_data)
+            return None
+
+    except Exception as e:
+        print(f"Error generating trivia question: {e}")
         return None
 
 def play_trivia(conn, username):
