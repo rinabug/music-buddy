@@ -39,7 +39,8 @@ def get_leaderboard(conn):
     ''')
     return [{"username": row[0], "score": row[1]} for row in cursor.fetchall()]
 
-def generate_trivia_question(artist):
+def generate_trivia_question(artists):
+    artist = random.choice(artists) if artists else None
     prompt = f"Generate a music trivia question "
     if artist:
         prompt += f"about the artist {artist} "
@@ -69,7 +70,9 @@ def generate_trivia_question(artist):
         return {'question': question, 'options': options, 'correct_answer': correct_answer}
     else:
         print("Error. Unable to parse the question data.")
+        print(question_data)
         return None
+
 
 def play_trivia(conn, username):
     print("\nWelcome to Trivia!")

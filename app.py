@@ -84,17 +84,19 @@ def index():
         sp = Spotify(auth=token_info['access_token'])
         playlists = sp.current_user_playlists()
         playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
+
+        top_artists = sp.current_user_top_artists(limit=5, time_range='short_term')['items']
+        artist_names = [artist['name'] for artist in top_artists]
+
     except Exception as e:
         print(f"Error fetching Spotify playlists: {e}")
         flash("There was an error connecting to Spotify. Please try logging in again.")
         return redirect(url_for('loginSpotify'))
 
-    # Fetch leaderboard data
     conn = get_db_connection()
     leaderboard = get_leaderboard(conn)
 
-    # Generate a trivia question
-    question_data = generate_trivia_question("Billie Eilish")
+    question_data = generate_trivia_question(artist_names)
     if question_data:
         session['current_question'] = question_data
         question = question_data['question']
@@ -121,29 +123,47 @@ def get_leaderboard_route():
 
 @app.route('/get_trivia_question')
 def get_trivia_question():
-    question_data = generate_trivia_question("Billie Eilish")
-    session['current_question'] = question_data
-    return jsonify(question_data)
+    if 'token_info' not in session:
+        return jsonify({'status': 'error', 'message': 'Spotify authentication required'}), 400
+    
+    token_info = session.get('token_info')
+    sp = Spotify(auth=token_info['access_token'])
+    
+    try:
+        top_artists = sp.current_user_top_artists(limit=5, time_range='short_term')['items']
+        artist_names = [artist['name'] for artist in top_artists]
+        question_data = generate_trivia_question(artist_names)
+        session['current_question'] = question_data
+        return jsonify(question_data)
+    except Exception as e:
+        print(f"Error generating trivia question: {e}")
+        return jsonify({'status': 'error', 'message': 'Error generating trivia question'}), 500
+
+    return jsonify(result)
 
 @app.route('/answer_trivia', methods=['POST'])
 def answer_trivia():
-    if 'username' not in session or 'current_question' not in session:
+    if 'username' not in session or 'current_questions' not in session:
         return jsonify({'status': 'error', 'message': 'Invalid session'}), 400
 
     data = request.get_json()
     user_answer = data.get('answer')
-    current_question = session['current_question']
+    question_index = data.get('question_index')
+    
+    current_questions = session['current_questions']
+    current_question = current_questions[question_index]
 
     if user_answer == current_question['correct_answer']:
         conn = get_db_connection()
         update_score(conn, session['username'], 1)
         check_and_award_badges(conn, session['username'])
         conn.close()
-        result = {'status': 'correct', 'message': 'Correct answer!'}
+        result = {'status': 'correct', 'message': 'Correct answer!', 'correct_answer': current_question['correct_answer']}
     else:
-        result = {'status': 'incorrect', 'message': f"Wrong answer. The correct answer was {current_question['correct_answer']}."}
+        result = {'status': 'incorrect', 'message': f"Wrong answer. The correct answer was {current_question['correct_answer']}.", 'correct_answer': current_question['correct_answer']}
 
     return jsonify(result)
+
 
 @app.route('/get_playlists')
 def get_playlists():
