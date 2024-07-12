@@ -7,6 +7,9 @@ from spotipy.cache_handler import FlaskSessionCacheHandler
 from backend.user_auth import create_users_table, is_valid_email, is_valid_password, hash_password
 from backend.friend_system import create_friend_tables, send_friend_request, view_friend_requests, accept_friend_request, view_friends
 from backend.trivia import create_leaderboard_table, get_leaderboard, generate_trivia_question, update_score
+from backend.badges import create_badges_table, get_user_badges, check_and_award_badges
+from backend.concert_recommendations import get_concert_recommendations
+from backend.music_recommendation import get_music_recommendations
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
@@ -37,6 +40,7 @@ def initialize_database():
     create_users_table(conn)
     create_friend_tables(conn)
     create_leaderboard_table(conn)
+    create_badges_table(conn)
     conn.close()
 
 @app.route('/')
@@ -132,6 +136,7 @@ def answer_trivia():
     if user_answer == current_question['correct_answer']:
         conn = get_db_connection()
         update_score(conn, session['username'], 1)
+        check_and_award_badges(conn, session['username'])
         conn.close()
         result = {'status': 'correct', 'message': 'Correct answer!'}
     else:
@@ -231,9 +236,11 @@ def profile():
     username = session['username']
     conn = get_db_connection()
     friends = view_friends(conn, username)
+    check_and_award_badges(conn, username)
+    badges = get_user_badges(conn, username)
     conn.close()
     
-    return render_template('profile.html', username=username, friends=friends)
+    return render_template('profile.html', username=username, friends=friends, badges=badges)
 
 @app.route('/send_friend_request', methods=['POST'])
 def send_friend_request_route():
@@ -244,12 +251,16 @@ def send_friend_request_route():
     receiver_username = data.get('receiver_username')
     
     conn = get_db_connection()
-    if not send_friend_request(conn, session['username'], receiver_username):
-        return jsonify({'status': 'error', 'message': 'User not found.'}), 404
-    send_friend_request(conn, session['username'], receiver_username)
+    result = send_friend_request(conn, session['username'], receiver_username)
     conn.close()
-    
-    return jsonify({'status': 'success', 'message': f'Friend request sent to {receiver_username}'})
+    if result:
+        check_and_award_badges(conn, session['username'])
+    conn.close()
+
+    if result:
+        return jsonify({'status': 'success', 'message': f'Friend request sent to {receiver_username}'})
+    else:
+        return jsonify({'status': 'error', 'message': 'User not found.'}), 404
 
 @app.route('/view_friend_requests')
 def view_friend_requests_route():
@@ -260,7 +271,10 @@ def view_friend_requests_route():
     requests = view_friend_requests(conn, session['username'])
     conn.close()
     
-    return jsonify({'status': 'success', 'requests': requests})
+    if not requests:
+        return jsonify({'status': 'success', 'message': 'No friend requests :(', 'requests': []})
+    else:
+        return jsonify({'status': 'success', 'requests': requests})
 
 @app.route('/accept_friend_request', methods=['POST'])
 def accept_friend_request_route():
@@ -289,7 +303,26 @@ def view_friends_route():
 
 @app.route('/discover')
 def discover():
-    return render_template('discover.html')
+    token_info = session.get('token_info', None)
+    try:
+        sp = Spotify(auth=token_info['access_token'])
+        
+        top_artists = sp.current_user_top_artists(limit=5, time_range='short_term')
+        genres = set()
+        for artist in top_artists['items']:
+            genres.update(artist['genres'])
+        top_genres = list(genres)[:3]  
+
+        user_location = "New York"  #change
+        chatgpt_recommendation, all_events = get_concert_recommendations(user_location, top_genres, radius=50)
+        music_recommendations = get_music_recommendations(sp)
+        return render_template('discover.html', 
+                               chatgpt_recommendation=chatgpt_recommendation,
+                               all_events=all_events,music_recommendations=music_recommendations)
+    except Exception as e:
+        print(f"Error with recommendations: {e}")
+        flash("There was an error.")
+        return redirect(url_for('loginSpotify'))
 
 @app.route('/collab')
 def collab():
