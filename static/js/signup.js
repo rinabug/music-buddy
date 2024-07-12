@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
-        // Basic client-side validation
         if (username.length < 3) {
             event.preventDefault();
             alert('Username must be at least 3 characters long.');
@@ -25,7 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // If all validations pass, the form will submit normally
     });
 });
 
