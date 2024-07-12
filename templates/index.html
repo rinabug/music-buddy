@@ -11,15 +11,15 @@
     <header>
         <nav>
             <div class="nav-left">
-            <h1>Music Buddy</h1>
+                <h1>Music Buddy</h1>
             </div>
             <div class="nav-right">
-            <ul>
-                <li><a>Home</a></li>
-                <li><a href="{{ url_for('discover') }}">Discover</a></li>
-                <li><a href="{{ url_for('collab') }}">Collab</a></li>
-                <li><a href="{{ url_for('profile') }}" class="nav-right">Profile</a></li>
-            </ul>
+                <ul>
+                    <li><a>Home</a></li>
+                    <li><a href="{{ url_for('discover') }}">Discover</a></li>
+                    <li><a href="{{ url_for('collab') }}">Collab</a></li>
+                    <li><a href="{{ url_for('profile') }}" class="nav-right">Profile</a></li>
+                </ul>
             </div>
         </nav>
     </header>
@@ -42,7 +42,7 @@
         </section>
 
         <section class="trivia-section">
-            <div class="container">
+            <div class="Trivia-section">
                 <h2>Trivia</h2>
                 <div id="triviaContent">
                     {% if question %}
@@ -50,14 +50,14 @@
                         <div id="options">
                             {% if options %}
                                 {% for letter, option in options.items() %}
-                                    <button class="trivia-option" data-answer="{{ letter }}">{{ letter }}) {{ option }}</button>
+                                    <button class="trivia-option button" data-answer="{{ letter }}">{{ letter }}) {{ option }}</button>
                                 {% endfor %}
                             {% else %}
                                 <p>No options available.</p>
                             {% endif %}
                         </div>
                         <p id="result"></p>
-                        <button id="nextQuestion" style="display: none;">Next Question</button>
+                        <button id="nextQuestion" class="button" style="display: none;">Next Question</button>
                     {% else %}
                         <p>No trivia question available.</p>
                     {% endif %}
