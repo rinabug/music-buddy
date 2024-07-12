@@ -11,12 +11,6 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 BASE_URL = 'https://app.ticketmaster.com/discovery/v2/'
 
-def get_user_preferences():
-    genre = input("What's your favorite genre of music? ")
-    location = input("Enter your city: ") #might add option for state as well because of  common city names
-    radius = input("Enter the radius (in miles) to search for events: ")
-    return genre, location, radius
-
 def get_events(location, genre, radius):
     start_date = datetime.now().strftime("%Y-%m-%d")
     end_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
@@ -60,7 +54,7 @@ def format_events(events):
 
 def get_chatgpt_recommendations(events, user_genre):
     events_text = "\n".join(events)
-    prompt = f"Given the user's favorite genre '{user_genre}' and the following list of events:\n{events_text}\nPlease recommend 5 events that the user might enjoy and explain why. Format your response as a numbered list."
+    prompt = f"Given the user's favorite genre '{user_genre}' and the following list of events:\n{events_text}\nPlease recommend 1 event that the user might enjoy."
 
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
@@ -72,15 +66,16 @@ def get_chatgpt_recommendations(events, user_genre):
 
     return response.choices[0].message.content
 
-def concert_recommendation_menu():
-    user_genre, user_location, user_radius = get_user_preferences()
-    events = get_events(user_location, user_genre, user_radius)
+def get_concert_recommendations(location, genres, radius):
+    all_events = []
+    for genre in genres:
+        events = get_events(location, genre, radius)
+        all_events.extend(format_events(events))
     
-    if events:
-        formatted_events = format_events(events)
-        recommendations = get_chatgpt_recommendations(formatted_events, user_genre)
-        #print("\nHere are some personalized event recommendations for you:")
-        print(recommendations)
-    else:
-        print(f"Sorry, no events found within {user_radius} miles of {user_location} for the genre {user_genre} in the next 30 days.")
+    if not all_events:
+        return None, []
+
+    chatgpt_recommendation = get_chatgpt_recommendations(all_events, genres)
+    
+    return chatgpt_recommendation, all_events
 
