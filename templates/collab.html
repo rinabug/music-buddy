@@ -24,16 +24,23 @@
             color: #333;
         }
 
-        /* New styles for messaging */
+        /* New styles for global chat */
         .message-item {
             margin-bottom: 10px;
         }
-        .message-item .sender {
+        .message-item .username {
             font-weight: bold;
         }
         .message-item .timestamp {
             font-size: 0.8em;
             color: #666;
+        }
+        #chatContent {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -41,7 +48,7 @@
     <header>
         <!-- Navbar or header content -->
         <nav>
-            <h1> Music Buddy</h1>
+            <h1>Music Buddy</h1>
             <ul>
                 <li><a href="{{ url_for('index') }}">Home</a></li>
                 <li><a href="{{ url_for('discover') }}">Discover</a></li>
@@ -55,7 +62,7 @@
         <div class="container">
             <h1>Collab</h1>
             <p>Create and view playlists with friends</p>
-            <p>Chat with them too!</p>
+            <p>Chat with everyone!</p>
         </div>
     </section>
 
@@ -63,30 +70,26 @@
         <!-- Main content area -->
         <section class="playlist-section">
             <div class="container">
-                    <h3>Your Top Playlists</h3>
-                    <div class="playlist-container">
-                      {% for name, image_url, url in playlists_info %}
-                        <div class="playlist-item" id="playlistContent">
-                          <img src="{{ image_url }}" alt="{{ name }}" class="playlist-image">
-                          <div class="playlist-details">
-                            <h4><a href="{{ url }}" target="_blank">{{ name }}</a></h4>
-                            <!-- Additional details or controls if needed -->
-                          </div>
-                        </div>
-                      {% endfor %}
+                <h3>Your Top Playlists</h3>
+                <div class="playlist-container">
+                  {% for name, image_url, url in playlists_info %}
+                    <div class="playlist-item" id="playlistContent">
+                      <img src="{{ image_url }}" alt="{{ name }}" class="playlist-image">
+                      <div class="playlist-details">
+                        <h4><a href="{{ url }}" target="_blank">{{ name }}</a></h4>
+                        <!-- Additional details or controls if needed -->
+                      </div>
                     </div>
+                  {% endfor %}
+                </div>
+            </div>
         </section>
 
         <section class="chat-section">
             <div class="container">
-                <h2>Messages</h2>
+                <h2>Global Chat</h2>
                 <div id="chatContent">
-                    <!-- chat content will be loaded dynamically -->
-                    <!-- Example message item -->
-                    <div class="message-item">
-                        <span class="sender">John Doe:</span> Hello there!
-                        <span class="timestamp">12:30 PM</span>
-                    </div>
+                    <!-- Chat content will be loaded dynamically -->
                 </div>
                 <!-- Form to send messages -->
                 <form id="chatForm">
