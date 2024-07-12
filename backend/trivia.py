@@ -1,8 +1,8 @@
 import sqlite3
 import random
-from openai import OpenAI
 import os
 import re
+from openai import OpenAI
 
 OPENAI_API_KEY = os.getenv('OPENAI_KEY')
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -44,7 +44,7 @@ def generate_trivia_question(artists):
     prompt = f"Generate a music trivia question "
     if artist:
         prompt += f"about the artist {artist} "
-    prompt += "with four multiple-choice options. Format the response as: Question\\n A) Option\\n B) Option\\n C) Option\\n D) Option\\n Correct Answer: Letter"
+    prompt += "with four multiple-choice options. Format the response as: Question\\nA) Option\\nB) Option\\nC) Option\\nD) Option\\nCorrect Answer: Letter"
 
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
@@ -73,14 +73,13 @@ def generate_trivia_question(artists):
         print(question_data)
         return None
 
-
 def play_trivia(conn, username):
     print("\nWelcome to Trivia!")
     score = 0
     num_questions = 5
 
     for _ in range(num_questions):
-        #In real implementation, will use user's listening history
+        # In real implementation, will use user's listening history
         question_data = generate_trivia_question("Billie Eilish")
         
         print(question_data['question'])

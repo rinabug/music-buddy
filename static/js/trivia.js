@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayQuestion(data) {
         questionElement.textContent = data.question;
         optionsElement.innerHTML = Object.entries(data.options).map(([letter, option]) => 
-            `<button class="trivia-option" data-answer="${letter}">${letter}) ${option}</button>`
+            `<button class="trivia-option button" data-answer="${letter}">${letter}) ${option}</button>`
         ).join('');
         resultElement.textContent = '';
         nextQuestionButton.style.display = 'none';
@@ -33,9 +33,26 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             resultElement.textContent = data.message;
+            if (data.status === 'correct') {
+                loadLeaderboard(); // Update leaderboard if the answer is correct
+            }
             nextQuestionButton.style.display = 'block';
         })
         .catch(error => console.error('Error submitting answer:', error));
+    }
+
+    function loadLeaderboard() {
+        fetch('/get_leaderboard')
+            .then(response => response.json())
+            .then(data => {
+                const leaderboardContent = document.getElementById('leaderboardContent');
+                leaderboardContent.innerHTML = `
+                    <ol>
+                        ${data.map(item => `<li>${item.username}: ${item.score} points</li>`).join('')}
+                    </ol>
+                `;
+            })
+            .catch(error => console.error('Error loading leaderboard:', error));
     }
 
     optionsElement.addEventListener('click', (event) => {

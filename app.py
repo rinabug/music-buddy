@@ -139,19 +139,15 @@ def get_trivia_question():
         print(f"Error generating trivia question: {e}")
         return jsonify({'status': 'error', 'message': 'Error generating trivia question'}), 500
 
-    return jsonify(result)
-
 @app.route('/answer_trivia', methods=['POST'])
 def answer_trivia():
-    if 'username' not in session or 'current_questions' not in session:
+    if 'username' not in session or 'current_question' not in session:
         return jsonify({'status': 'error', 'message': 'Invalid session'}), 400
 
     data = request.get_json()
     user_answer = data.get('answer')
-    question_index = data.get('question_index')
     
-    current_questions = session['current_questions']
-    current_question = current_questions[question_index]
+    current_question = session['current_question']
 
     if user_answer == current_question['correct_answer']:
         conn = get_db_connection()
